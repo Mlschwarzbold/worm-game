@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worm Graph Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <h1>Worm Graph Prototype</h1>
+      <p>Graph rendering foundation for a node-based puzzle game.</p>
+      <p><a href="editor.html">Open Level Editor</a></p>
+    </header>
+
+    <section class="level-controls" aria-label="Level controls">
+      <button id="prev-level" type="button">Previous Level</button>
+      <div class="level-info">
+        <strong id="level-name">Level</strong>
+        <span id="level-meta"></span>
+      </div>
+      <button id="next-level" type="button">Next Level</button>
+    </section>
+
+    <section class="board-wrap">
+      <svg id="graph" class="board" viewBox="0 0 800 600" role="img" aria-label="Puzzle graph"></svg>
+    </section>
+
+    <section class="bottom-controls" aria-label="Game controls">
+      <button id="retry-level" type="button">Retry Level</button>
+      <button id="win-next-level" type="button" hidden>Go to Next Level</button>
+      <span id="win-message" hidden>Level complete!</span>
+    </section>
+  </main>
+
+  <script src="levels/level-1.js"></script>
+  <script src="levels/level-2.js"></script>
+  <script src="levels/level-3.js"></script>
+  <script src="levels/level-4.js"></script>
+  <script src="levels/level-5.js"></script>
+  <script src="levels/level-6.js"></script>
+  <script src="levels/level-7.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>

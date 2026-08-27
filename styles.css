@@ -1,0 +1,186 @@
+:root {
+  --bg: #f7f7f5;
+  --panel: #ffffff;
+  --text: #1f1f1f;
+  --muted: #636363;
+  --edge: #c8c8c8;
+  --node: #6a6a6a;
+  --node-hover: #505050;
+  --accent: #3a7afe;
+  --start: #2d9c6a;
+  --end: #da4b4b;
+  --food: #f2b635;
+  --worm: #334155;
+  --worm-head: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.page {
+  width: min(980px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header h1 {
+  margin: 0 0 6px;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.header p {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.level-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.level-controls button {
+  border: 1px solid #d8d8d8;
+  background: #ffffff;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.level-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.level-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+#level-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.board-wrap {
+  background: var(--panel);
+  border: 1px solid #e8e8e8;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+.bottom-controls {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.bottom-controls button {
+  border: 1px solid #d8d8d8;
+  background: #ffffff;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#win-next-level {
+  border-color: #bad8ff;
+  background: #edf4ff;
+}
+
+#win-message {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.board {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  background: #fcfcfc;
+}
+
+.edge {
+  stroke: var(--edge);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.node {
+  fill: var(--node);
+  cursor: pointer;
+  transition: fill 120ms ease;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.node:hover {
+  fill: var(--node-hover);
+}
+
+.node.is-selected {
+  fill: var(--accent);
+}
+
+.node-start {
+  fill: var(--start);
+}
+
+.node-end {
+  fill: var(--end);
+}
+
+.node-food {
+  fill: var(--food);
+}
+
+.node-label {
+  font-size: 12px;
+  fill: #8a8a8a;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.worm-edge {
+  stroke: var(--worm);
+  stroke-width: 8;
+  stroke-linecap: round;
+  opacity: 0.95;
+}
+
+.worm-node {
+  fill: var(--worm);
+  stroke: #f8fafc;
+  stroke-width: 2;
+}
+
+.worm-head {
+  fill: var(--worm-head);
+}
+
+.worm-tail {
+  opacity: 0.88;
+}
