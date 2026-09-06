@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = 'worm-game'
         CONTAINER_NAME = 'worm-game'
-        HOST_PORT = '80'
+        HOST_PORT = '8081'
     }
 
     stages {
