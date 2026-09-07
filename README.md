@@ -18,6 +18,18 @@ Open  http://localhost:8081/  for the game or  http://localhost:8081/editor.html
 
 Stop the container with `Ctrl+C`.
 
+## Adding levels and tracking versions
+
+Add a `level-*.js` file to `levels/`. The Docker build automatically scans that
+folder and generates the level manifest used by both the game and editor.
+When running without Docker, regenerate it with:
+
+```bash
+node scripts/generate-level-manifest.js
+```
+
+Update the displayed source version in `version.js`.
+
 ## Deploy with Jenkins
 
 Create a Pipeline job that points to this repository and uses the committed

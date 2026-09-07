@@ -38,6 +38,13 @@ body {
   color: var(--muted);
 }
 
+.footer {
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
 .layout {
   display: grid;
   grid-template-columns: 320px 1fr;
