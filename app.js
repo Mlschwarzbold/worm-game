@@ -134,7 +134,10 @@ function createSvgElement(tag, attrs = {}) {
 
 function renderWorm(svg, data, path) {
   const map = nodeIndex(data.nodes);
-  const wormLayer = createSvgElement("g", { class: "worm-layer" });
+  const wormLayer = createSvgElement("g", {
+    class: "worm-layer",
+    "pointer-events": "none"
+  });
 
   for (let i = 0; i < path.length - 1; i += 1) {
     const source = map.get(path[i]);
@@ -267,6 +270,10 @@ function init() {
     renderGraph(svg, gameState.currentLevel, gameState, (clickedNodeId) => {
       const head = gameState.wormPath[0];
       if (clickedNodeId === head) {
+        return;
+      }
+      if (gameState.wormPath.includes(clickedNodeId)) {
+        console.log(`Invalid move: ${clickedNodeId} is occupied by the worm.`);
         return;
       }
       if (!gameState.neighbors.get(head).has(clickedNodeId)) {
