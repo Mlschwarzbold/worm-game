@@ -158,7 +158,7 @@ function renderWorm(svg, data, path) {
     const nodeId = path[i];
     const node = map.get(nodeId);
     const roleClass = i === 0 ? "worm-head" : (i === path.length - 1 ? "worm-tail" : "worm-body");
-    const radius = i === 0 ? 13 : 10;
+    const radius = 19;
     const circle = createSvgElement("circle", {
       cx: node.x,
       cy: node.y,
@@ -177,9 +177,9 @@ function renderWorm(svg, data, path) {
       const ny = dy / dist;
       const perpX = -ny;
       const perpY = nx;
-      const eyeR = 3;
-      const eyeOffset = 4;
-      const eyeForward = 3;
+      const eyeR = 4;
+      const eyeOffset = 6;
+      const eyeForward = 4;
       for (const side of [-1, 1]) {
         const eye = createSvgElement("circle", {
           cx: node.x + nx * eyeForward + perpX * eyeOffset * side,
