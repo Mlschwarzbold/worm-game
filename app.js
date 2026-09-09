@@ -409,7 +409,6 @@ function init() {
       animationFrameId = requestAnimationFrame(tick);
     } else {
     gameState.animation = null;
-    gameState.lastEyeDir = null;
       animationFrameId = null;
       renderCurrentState();
     }
