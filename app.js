@@ -218,8 +218,14 @@ function renderWorm(svg, data, path, anim) {
         y: lerp(ghostTailPos.y, newTailPos.y, anim.t)
       };
       wormLayer.appendChild(createSvgElement("circle", {
+        cx: ghostTailPos.x, cy: ghostTailPos.y, r: 19,
+        class: "worm-node worm-tail",
+        opacity: 0.4, "stroke-dasharray": "4 4"
+      }));
+      wormLayer.appendChild(createSvgElement("circle", {
         cx: animTailPos.x, cy: animTailPos.y, r: 19,
-        class: "worm-node worm-tail", opacity: 1
+        class: "worm-node worm-tail",
+        opacity: 0.4, fill: "#3a7afe"
       }));
     }
   }
