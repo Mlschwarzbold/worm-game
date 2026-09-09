@@ -199,4 +199,9 @@ body {
   height: 100vh;
   pointer-events: none;
   z-index: 1000;
+  display: none;
+}
+
+#confetti-canvas.active {
+  display: block;
 }

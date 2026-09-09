@@ -34,6 +34,7 @@ window.addEventListener("resize", resizeConfettiCanvas);
 resizeConfettiCanvas();
 
 function launchConfetti() {
+  confettiCanvas.classList.add("active");
   const colors = ["#22c55e", "#3a7afe", "#f2b635", "#da4b4b", "#a855f7", "#ec4899"];
   confettiParticles = [];
   for (let i = 0; i < 120; i += 1) {
@@ -82,6 +83,7 @@ function tickConfetti() {
   } else {
     confettiRunning = false;
     confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    confettiCanvas.classList.remove("active");
   }
 }
 
