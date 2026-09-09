@@ -175,9 +175,7 @@ function renderWorm(svg, data, path, anim) {
 
   for (let i = 0; i < path.length - 1; i += 1) {
     const from = segPos(i);
-    const to = i === 0 && anim
-      ? nodePos(path[0])
-      : segPos(i + 1);
+    const to = segPos(i + 1);
     const opacity = i === path.length - 2 && anim && anim.oldTailNodeId ? 1 - anim.t : 0.95;
     const line = createSvgElement("line", {
       x1: from.x, y1: from.y,
@@ -206,11 +204,12 @@ function renderWorm(svg, data, path, anim) {
     wormLayer.appendChild(circle);
 
     if (i === 0 && path.length > 1) {
-      const nextNodePos = i === 0 && anim
-        ? nodePos(path[0])
+      const targetPos = nodePos(path[0]);
+      const behindPos = anim
+        ? anim.oldHeadPos
         : nodePos(path[1]);
-      const dx = pos.x - nextNodePos.x;
-      const dy = pos.y - nextNodePos.y;
+      const dx = targetPos.x - behindPos.x;
+      const dy = targetPos.y - behindPos.y;
       const dist = Math.sqrt(dx * dx + dy * dy) || 1;
       const nx = dx / dist;
       const ny = dy / dist;
