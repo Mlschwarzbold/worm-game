@@ -9,7 +9,8 @@ const gameState = {
   neighbors: null,
   isLevelWon: false,
   wormLength: 1,
-  wormPath: []
+  wormPath: [],
+  animation: null
 };
 
 function validateGraph({ nodes, edges }) {
@@ -102,6 +103,14 @@ function nodeIndex(nodes) {
   return new Map(nodes.map((node) => [node.id, node]));
 }
 
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
 function cloneLevel(level) {
   return {
     id: level.id,
@@ -132,46 +141,76 @@ function createSvgElement(tag, attrs = {}) {
   return el;
 }
 
-function renderWorm(svg, data, path) {
+function renderWorm(svg, data, path, anim) {
   const map = nodeIndex(data.nodes);
   const wormLayer = createSvgElement("g", {
     class: "worm-layer",
     "pointer-events": "none"
   });
 
+  function nodePos(nodeId) {
+    const n = map.get(nodeId);
+    return { x: n.x, y: n.y };
+  }
+
+  function midPos(a, b) {
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  const headPos = anim
+    ? { x: lerp(anim.oldHeadPos.x, nodePos(path[0]).x, anim.t),
+        y: lerp(anim.oldHeadPos.y, nodePos(path[0]).y, anim.t) }
+    : nodePos(path[0]);
+
+  const tailNodeId = anim && anim.oldTailNodeId ? anim.oldTailNodeId : path[path.length - 1];
+  const tailPos = anim && anim.oldTailNodeId
+    ? { x: lerp(nodePos(path[path.length - 1]).x, nodePos(anim.oldTailNodeId).x, anim.t),
+        y: lerp(nodePos(path[path.length - 1]).y, nodePos(anim.oldTailNodeId).y, anim.t) }
+    : nodePos(path[path.length - 1]);
+  const tailOpacity = anim && anim.oldTailNodeId ? anim.t : 1;
+
+  function segPos(i) {
+    return i === 0 ? headPos : nodePos(path[i]);
+  }
+
   for (let i = 0; i < path.length - 1; i += 1) {
-    const source = map.get(path[i]);
-    const target = map.get(path[i + 1]);
+    const from = segPos(i);
+    const to = i === 0 && anim
+      ? nodePos(path[0])
+      : segPos(i + 1);
+    const opacity = i === path.length - 2 && anim && anim.oldTailNodeId ? 1 - anim.t : 0.95;
     const line = createSvgElement("line", {
-      x1: source.x,
-      y1: source.y,
-      x2: target.x,
-      y2: target.y,
+      x1: from.x, y1: from.y,
+      x2: to.x, y2: to.y,
       class: "worm-edge",
       "data-from": path[i],
-      "data-to": path[i + 1]
+      "data-to": path[i + 1],
+      opacity: opacity
     });
     wormLayer.appendChild(line);
   }
 
   for (let i = 0; i < path.length; i += 1) {
     const nodeId = path[i];
-    const node = map.get(nodeId);
+    const pos = segPos(i);
     const roleClass = i === 0 ? "worm-head" : (i === path.length - 1 ? "worm-tail" : "worm-body");
     const radius = 19;
+    const opacity = i === path.length - 1 && anim && anim.oldTailNodeId ? 1 - anim.t : 1;
     const circle = createSvgElement("circle", {
-      cx: node.x,
-      cy: node.y,
+      cx: pos.x, cy: pos.y,
       r: radius,
       class: `worm-node ${roleClass}`,
-      "data-id": nodeId
+      "data-id": nodeId,
+      opacity: opacity
     });
     wormLayer.appendChild(circle);
 
     if (i === 0 && path.length > 1) {
-      const next = map.get(path[1]);
-      const dx = node.x - next.x;
-      const dy = node.y - next.y;
+      const nextNodePos = i === 0 && anim
+        ? nodePos(path[0])
+        : nodePos(path[1]);
+      const dx = pos.x - nextNodePos.x;
+      const dy = pos.y - nextNodePos.y;
       const dist = Math.sqrt(dx * dx + dy * dy) || 1;
       const nx = dx / dist;
       const ny = dy / dist;
@@ -182,8 +221,8 @@ function renderWorm(svg, data, path) {
       const eyeForward = 4;
       for (const side of [-1, 1]) {
         const eye = createSvgElement("circle", {
-          cx: node.x + nx * eyeForward + perpX * eyeOffset * side,
-          cy: node.y + ny * eyeForward + perpY * eyeOffset * side,
+          cx: pos.x + nx * eyeForward + perpX * eyeOffset * side,
+          cy: pos.y + ny * eyeForward + perpY * eyeOffset * side,
           r: eyeR,
           class: "worm-eye"
         });
@@ -241,7 +280,7 @@ function renderGraph(svg, data, state, onNodeClick) {
   svg.appendChild(layers.edges);
   svg.appendChild(layers.nodes);
   svg.appendChild(layers.labels);
-  renderWorm(svg, data, state.wormPath);
+  renderWorm(svg, data, state.wormPath, state.animation);
 }
 
 function init() {
@@ -313,6 +352,10 @@ function init() {
         return;
       }
 
+      const oldHeadNode = gameState.nodeMap.get(gameState.wormPath[0]);
+      const oldHeadPos = { x: oldHeadNode.x, y: oldHeadNode.y };
+      const oldTailNodeId = !shouldGrowThisMove ? gameState.wormPath[gameState.wormPath.length - 1] : null;
+
       gameState.wormPath = nextPath;
       const nextHeadNode = gameState.nodeMap.get(clickedNodeId);
       if (nextHeadNode.type === "food") {
@@ -320,15 +363,58 @@ function init() {
         gameState.wormLength += 1;
       }
       gameState.isLevelWon = isWinningState(gameState);
+      gameState.animation = {
+        oldHeadPos,
+        oldTailNodeId,
+        t: 0,
+        startTime: performance.now(),
+        duration: 500
+      };
       updateHeader();
       updateBottomControls();
-      renderCurrentState();
+      startAnimation();
     });
     updateHeader();
     updateBottomControls();
   }
 
+  let animationFrameId = null;
+
+  function startAnimation() {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+    animationFrameId = requestAnimationFrame(tick);
+  }
+
+  function tick(now) {
+    const anim = gameState.animation;
+    if (!anim) {
+      animationFrameId = null;
+      return;
+    }
+    const elapsed = now - anim.startTime;
+    const rawT = Math.min(elapsed / anim.duration, 1);
+    anim.t = easeInOutCubic(rawT);
+
+    renderCurrentState();
+
+    if (rawT < 1) {
+      animationFrameId = requestAnimationFrame(tick);
+    } else {
+      gameState.animation = null;
+      animationFrameId = null;
+      renderCurrentState();
+    }
+  }
+
   function loadLevel(index) {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    gameState.animation = null;
+
     const level = cloneLevel(levels[index]);
     validateGraph(level);
 
