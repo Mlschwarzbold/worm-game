@@ -164,13 +164,15 @@ function renderWorm(svg, data, path, anim) {
 
   const tailNodeId = anim && anim.oldTailNodeId ? anim.oldTailNodeId : path[path.length - 1];
   const tailPos = anim && anim.oldTailNodeId
-    ? { x: lerp(nodePos(path[path.length - 1]).x, nodePos(anim.oldTailNodeId).x, anim.t),
-        y: lerp(nodePos(path[path.length - 1]).y, nodePos(anim.oldTailNodeId).y, anim.t) }
+    ? { x: lerp(nodePos(anim.oldTailNodeId).x, nodePos(path[path.length - 1]).x, anim.t),
+        y: lerp(nodePos(anim.oldTailNodeId).y, nodePos(path[path.length - 1]).y, anim.t) }
     : nodePos(path[path.length - 1]);
-  const tailOpacity = anim && anim.oldTailNodeId ? anim.t : 1;
+  const tailOpacity = anim && anim.oldTailNodeId ? 1 - anim.t : 1;
 
   function segPos(i) {
-    return i === 0 ? headPos : nodePos(path[i]);
+    if (i === 0) return headPos;
+    if (i === path.length - 1 && anim && anim.oldTailNodeId) return tailPos;
+    return nodePos(path[i]);
   }
 
   for (let i = 0; i < path.length - 1; i += 1) {
@@ -353,7 +355,9 @@ function init() {
 
       const oldHeadNode = gameState.nodeMap.get(gameState.wormPath[0]);
       const oldHeadPos = { x: oldHeadNode.x, y: oldHeadNode.y };
-      const oldTailNodeId = !shouldGrowThisMove ? gameState.wormPath[gameState.wormPath.length - 1] : null;
+      const oldTailNodeId = !shouldGrowThisMove && gameState.wormPath.length > 1
+        ? gameState.wormPath[gameState.wormPath.length - 1]
+        : null;
 
       gameState.wormPath = nextPath;
       const nextHeadNode = gameState.nodeMap.get(clickedNodeId);
