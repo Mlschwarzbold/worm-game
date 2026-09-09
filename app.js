@@ -345,6 +345,11 @@ function init() {
     const mx = (e.clientX - rect.left) * scaleX;
     const my = (e.clientY - rect.top) * scaleY;
 
+    const head = gameState.wormPath[0];
+    const reachable = head && gameState.neighbors.get(head)
+      ? new Set([...gameState.neighbors.get(head)].filter((id) => !gameState.wormPath.includes(id)))
+      : new Set();
+
     let closest = null;
     let closestDist = Infinity;
 
@@ -356,7 +361,7 @@ function init() {
       if (dist < PROXIMITY_RADIUS) {
         const intensity = 1 - dist / PROXIMITY_RADIUS;
         const blur = 4 + intensity * 12;
-        node.el.style.filter = `drop-shadow(0 0 ${blur}px rgba(255, 255, 255, ${0.3 + intensity * 0.5}))`;
+        node.el.style.filter = `drop-shadow(0 0 ${blur}px rgba(180, 180, 180, ${0.3 + intensity * 0.5}))`;
       } else {
         node.el.style.filter = "";
       }
@@ -368,8 +373,10 @@ function init() {
     }
 
     if (closest && closestDist < PROXIMITY_RADIUS) {
+      const color = reachable.has(closest.id) ? "#22c55e" : "#999999";
       proximityState.highlightCircle.setAttribute("cx", closest.x);
       proximityState.highlightCircle.setAttribute("cy", closest.y);
+      proximityState.highlightCircle.setAttribute("stroke", color);
       proximityState.highlightCircle.setAttribute("visibility", "visible");
     } else {
       proximityState.highlightCircle.setAttribute("visibility", "hidden");
