@@ -4,7 +4,8 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const proximityState = {
   nodeCircles: [],
   highlightCircle: null,
-  svg: null
+  svg: null,
+  onNodeClick: null
 };
 
 const gameState = {
@@ -250,6 +251,7 @@ function renderWorm(svg, data, path, anim) {
 
 function renderGraph(svg, data, state, onNodeClick) {
   svg.textContent = "";
+  proximityState.onNodeClick = onNodeClick;
   const map = nodeIndex(data.nodes);
   const layers = {
     edges: createSvgElement("g", { class: "edges-layer" }),
@@ -388,6 +390,38 @@ function init() {
       node.el.style.filter = "";
     }
     proximityState.highlightCircle.setAttribute("visibility", "hidden");
+  });
+
+  svg.addEventListener("click", (e) => {
+    if (e.target !== svg && !e.target.classList.contains("edge")) return;
+
+    const rect = svg.getBoundingClientRect();
+    const scaleX = svg.viewBox.baseVal.width / rect.width;
+    const scaleY = svg.viewBox.baseVal.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleY;
+
+    const head = gameState.wormPath[0];
+    const reachable = head && gameState.neighbors.get(head)
+      ? new Set([...gameState.neighbors.get(head)].filter((id) => !gameState.wormPath.includes(id)))
+      : new Set();
+
+    let closest = null;
+    let closestDist = Infinity;
+
+    for (const node of proximityState.nodeCircles) {
+      const dx = mx - node.x;
+      const dy = my - node.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = node;
+      }
+    }
+
+    if (closest && closestDist < PROXIMITY_RADIUS && reachable.has(closest.id)) {
+      proximityState.onNodeClick(closest.id);
+    }
   });
 
   function updateHeader() {
