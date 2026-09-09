@@ -1,6 +1,12 @@
 const levels = Array.isArray(window.WORM_LEVELS) ? window.WORM_LEVELS : [];
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+const proximityState = {
+  nodeCircles: [],
+  highlightCircle: null,
+  svg: null
+};
+
 const gameState = {
   levelIndex: 0,
   currentLevel: null,
@@ -264,6 +270,12 @@ function renderGraph(svg, data, state, onNodeClick) {
     layers.edges.appendChild(line);
   }
 
+  proximityState.nodeCircles = [];
+  proximityState.highlightCircle = createSvgElement("circle", {
+    r: 18, fill: "none", stroke: "#22c55e", "stroke-width": 3,
+    "pointer-events": "none", visibility: "hidden"
+  });
+
   for (const node of data.nodes) {
     const circle = createSvgElement("circle", {
       cx: node.x,
@@ -273,6 +285,7 @@ function renderGraph(svg, data, state, onNodeClick) {
       "data-id": node.id
     });
     circle.addEventListener("click", () => onNodeClick(node.id));
+    proximityState.nodeCircles.push({ id: node.id, x: node.x, y: node.y, el: circle });
 
     const label = createSvgElement("text", {
       x: node.x,
@@ -288,6 +301,7 @@ function renderGraph(svg, data, state, onNodeClick) {
   svg.appendChild(layers.edges);
   svg.appendChild(layers.nodes);
   svg.appendChild(layers.labels);
+  svg.appendChild(proximityState.highlightCircle);
   renderWorm(svg, data, state.wormPath, state.animation);
 }
 
@@ -320,6 +334,54 @@ function init() {
   if (!(levelName instanceof HTMLElement) || !(levelMeta instanceof HTMLElement)) {
     throw new Error("Missing level info elements.");
   }
+
+  proximityState.svg = svg;
+  const PROXIMITY_RADIUS = 60;
+
+  svg.addEventListener("mousemove", (e) => {
+    const rect = svg.getBoundingClientRect();
+    const scaleX = svg.viewBox.baseVal.width / rect.width;
+    const scaleY = svg.viewBox.baseVal.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleY;
+
+    let closest = null;
+    let closestDist = Infinity;
+
+    for (const node of proximityState.nodeCircles) {
+      const dx = mx - node.x;
+      const dy = my - node.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < PROXIMITY_RADIUS) {
+        const intensity = 1 - dist / PROXIMITY_RADIUS;
+        const blur = 4 + intensity * 12;
+        node.el.style.filter = `drop-shadow(0 0 ${blur}px rgba(255, 255, 255, ${0.3 + intensity * 0.5}))`;
+      } else {
+        node.el.style.filter = "";
+      }
+
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = node;
+      }
+    }
+
+    if (closest && closestDist < PROXIMITY_RADIUS) {
+      proximityState.highlightCircle.setAttribute("cx", closest.x);
+      proximityState.highlightCircle.setAttribute("cy", closest.y);
+      proximityState.highlightCircle.setAttribute("visibility", "visible");
+    } else {
+      proximityState.highlightCircle.setAttribute("visibility", "hidden");
+    }
+  });
+
+  svg.addEventListener("mouseleave", () => {
+    for (const node of proximityState.nodeCircles) {
+      node.el.style.filter = "";
+    }
+    proximityState.highlightCircle.setAttribute("visibility", "hidden");
+  });
 
   function updateHeader() {
     const level = gameState.currentLevel;
