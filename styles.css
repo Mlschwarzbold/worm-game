@@ -191,6 +191,11 @@ body {
   stroke-width: 2;
 }
 
+.worm-eye {
+  fill: #ffffff;
+  pointer-events: none;
+}
+
 #confetti-canvas {
   position: fixed;
   top: 0;
