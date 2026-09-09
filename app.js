@@ -10,7 +10,8 @@ const gameState = {
   isLevelWon: false,
   wormLength: 1,
   wormPath: [],
-  animation: null
+  animation: null,
+  lastEyeDir: null
 };
 
 function validateGraph({ nodes, edges }) {
@@ -189,25 +190,25 @@ function renderWorm(svg, data, path, anim) {
     class: "worm-node worm-head", opacity: 1
   }));
 
-  let eyeBehind;
-  if (path.length > 1) {
-    eyeBehind = hasAnim ? nodePos(anim.oldPath[0]) : nodePos(path[1]);
-  } else if (hasAnim) {
-    eyeBehind = nodePos(anim.oldPath[0]);
+  let eyeDir;
+  if (hasAnim) {
+    const behind = path.length > 1 ? nodePos(anim.oldPath[0]) : nodePos(anim.oldPath[0]);
+    const dx = headPos.x - behind.x;
+    const dy = headPos.y - behind.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    eyeDir = { x: dx / dist, y: dy / dist };
+    gameState.lastEyeDir = eyeDir;
+  } else if (gameState.lastEyeDir) {
+    eyeDir = gameState.lastEyeDir;
   } else {
-    eyeBehind = { x: headPos.x, y: headPos.y + 1 };
+    eyeDir = { x: 0, y: -1 };
   }
-  const dx = headPos.x - eyeBehind.x;
-  const dy = headPos.y - eyeBehind.y;
-  const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-  const nx = dx / dist;
-  const ny = dy / dist;
-  const perpX = -ny;
-  const perpY = nx;
+  const perpX = -eyeDir.y;
+  const perpY = eyeDir.x;
   for (const side of [-1, 1]) {
     wormLayer.appendChild(createSvgElement("circle", {
-      cx: headPos.x + nx * 4 + perpX * 6 * side,
-      cy: headPos.y + ny * 4 + perpY * 6 * side,
+      cx: headPos.x + eyeDir.x * 4 + perpX * 6 * side,
+      cy: headPos.y + eyeDir.y * 4 + perpY * 6 * side,
       r: 4, class: "worm-eye"
     }));
   }
@@ -407,7 +408,8 @@ function init() {
     if (rawT < 1) {
       animationFrameId = requestAnimationFrame(tick);
     } else {
-      gameState.animation = null;
+    gameState.animation = null;
+    gameState.lastEyeDir = null;
       animationFrameId = null;
       renderCurrentState();
     }
