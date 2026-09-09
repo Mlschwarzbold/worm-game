@@ -172,10 +172,10 @@ body {
 }
 
 .worm-edge {
-  stroke: var(--worm);
+  stroke: var(--worm-head);
   stroke-width: 38;
   stroke-linecap: round;
-  opacity: 0.95;
+  opacity: 1;
   pointer-events: none;
 }
 

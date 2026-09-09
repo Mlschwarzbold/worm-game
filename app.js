@@ -162,7 +162,7 @@ function renderWorm(svg, data, path, anim) {
     const to = nodePos(path[i + 1]);
     wormLayer.appendChild(createSvgElement("line", {
       x1: from.x, y1: from.y, x2: to.x, y2: to.y,
-      class: "worm-edge", opacity: 0.6
+      class: "worm-edge", opacity: 1
     }));
   }
 
@@ -197,7 +197,7 @@ function renderWorm(svg, data, path, anim) {
       wormLayer.appendChild(createSvgElement("line", {
         x1: lastReal.x, y1: lastReal.y,
         x2: animTailPos.x, y2: animTailPos.y,
-        class: "worm-edge", opacity: 0.6
+        class: "worm-edge", opacity: 1
       }));
     }
 
@@ -206,7 +206,7 @@ function renderWorm(svg, data, path, anim) {
       wormLayer.appendChild(createSvgElement("line", {
         x1: headPos.x, y1: headPos.y,
         x2: secondReal.x, y2: secondReal.y,
-        class: "worm-edge", opacity: 0.6
+        class: "worm-edge", opacity: 1
       }));
     }
   }
