@@ -158,10 +158,11 @@ function renderWorm(svg, data, path) {
     const nodeId = path[i];
     const node = map.get(nodeId);
     const roleClass = i === 0 ? "worm-head" : (i === path.length - 1 ? "worm-tail" : "worm-body");
+    const radius = i === 0 ? 12 : 10;
     const circle = createSvgElement("circle", {
       cx: node.x,
       cy: node.y,
-      r: 10,
+      r: radius,
       class: `worm-node ${roleClass}`,
       "data-id": nodeId
     });

@@ -11,7 +11,7 @@
   --end: #da4b4b;
   --food: #f2b635;
   --worm: #334155;
-  --worm-head: #0f172a;
+  --worm-head: #22c55e;
 }
 
 * {
@@ -188,6 +188,9 @@ body {
 
 .worm-head {
   fill: var(--worm-head);
+  stroke: #ffffff;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.5));
 }
 
 .worm-tail {
