@@ -154,15 +154,14 @@ function renderWorm(svg, data, path, anim) {
   }
 
   const hasAnim = anim && anim.oldPath;
-  const fadeCount = hasAnim ? anim.oldPath.length - path.length : 0;
-  const tailAnimated = hasAnim && fadeCount > 0;
+  const tailAnimated = hasAnim && !anim.isGrowing;
 
   for (let i = 0; i < path.length - 1; i += 1) {
     const from = nodePos(path[i]);
     const to = nodePos(path[i + 1]);
     wormLayer.appendChild(createSvgElement("line", {
       x1: from.x, y1: from.y, x2: to.x, y2: to.y,
-      class: "worm-edge", opacity: 0.95
+      class: "worm-edge", opacity: 0.6
     }));
   }
 
@@ -172,9 +171,10 @@ function renderWorm(svg, data, path, anim) {
 
     const pos = nodePos(path[i]);
     const roleClass = i === 0 ? "worm-head" : (isTail ? "worm-tail" : "worm-body");
+    const opacity = i === 0 ? 1 : 0.6;
     wormLayer.appendChild(createSvgElement("circle", {
       cx: pos.x, cy: pos.y, r: 19,
-      class: `worm-node ${roleClass}`, opacity: 1
+      class: `worm-node ${roleClass}`, opacity: opacity
     }));
 
     if (i === 0 && path.length > 1) {
@@ -362,6 +362,7 @@ function init() {
       gameState.isLevelWon = isWinningState(gameState);
       gameState.animation = {
         oldPath,
+        isGrowing: shouldGrowThisMove,
         t: 0,
         startTime: performance.now(),
         duration: 500
