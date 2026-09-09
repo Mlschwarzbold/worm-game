@@ -437,6 +437,22 @@ function init() {
     winNextButton.hidden = !(gameState.isLevelWon && hasNextLevel);
     winMessage.hidden = !gameState.isLevelWon;
     retryButton.disabled = false;
+
+    const head = gameState.wormPath[0];
+    const reachable = head && gameState.neighbors.get(head)
+      ? [...gameState.neighbors.get(head)].filter((id) => !gameState.wormPath.includes(id))
+      : [];
+    const stuck = reachable.length === 0 && !gameState.isLevelWon;
+
+    if (stuck) {
+      retryButton.style.background = "#da4b4b";
+      retryButton.style.color = "#ffffff";
+      retryButton.style.borderColor = "#da4b4b";
+    } else {
+      retryButton.style.background = "";
+      retryButton.style.color = "";
+      retryButton.style.borderColor = "";
+    }
   }
 
   function renderCurrentState() {
