@@ -153,83 +153,96 @@ function renderWorm(svg, data, path, anim) {
     return { x: n.x, y: n.y };
   }
 
-  let renderPath;
-  let fadeCount;
-
   if (anim && anim.oldPath) {
     const oldPath = anim.oldPath;
     const newPath = path;
+    const fadeCount = oldPath.length - newPath.length;
     const maxLen = Math.max(oldPath.length, newPath.length);
-    fadeCount = oldPath.length - newPath.length;
-    renderPath = [];
+
+    for (let i = 0; i < newPath.length - 1; i += 1) {
+      const from = nodePos(newPath[i]);
+      const to = nodePos(newPath[i + 1]);
+      wormLayer.appendChild(createSvgElement("line", {
+        x1: from.x, y1: from.y, x2: to.x, y2: to.y,
+        class: "worm-edge", opacity: 0.95
+      }));
+    }
+    if (fadeCount > 0) {
+      const from = nodePos(oldPath[oldPath.length - 1]);
+      const to = nodePos(newPath[newPath.length - 1]);
+      wormLayer.appendChild(createSvgElement("line", {
+        x1: from.x, y1: from.y, x2: to.x, y2: to.y,
+        class: "worm-edge", opacity: 1 - anim.t
+      }));
+    }
+
     for (let i = 0; i < maxLen; i += 1) {
       const oldPos = i < oldPath.length ? nodePos(oldPath[i]) : nodePos(oldPath[oldPath.length - 1]);
       const newPos = i < newPath.length ? nodePos(newPath[i]) : nodePos(newPath[newPath.length - 1]);
-      renderPath.push({
-        x: lerp(oldPos.x, newPos.x, anim.t),
-        y: lerp(oldPos.y, newPos.y, anim.t),
-        opacity: i >= newPath.length ? 1 - anim.t : 1
-      });
+      const x = lerp(oldPos.x, newPos.x, anim.t);
+      const y = lerp(oldPos.y, newPos.y, anim.t);
+      const opacity = i >= newPath.length ? 1 - anim.t : 1;
+      const isFadeNode = i >= newPath.length;
+      const roleClass = i === 0 ? "worm-head" : (isFadeNode ? "worm-tail" : "worm-body");
+
+      wormLayer.appendChild(createSvgElement("circle", {
+        cx: x, cy: y, r: 19,
+        class: `worm-node ${roleClass}`,
+        opacity: opacity
+      }));
+
+      if (i === 0) {
+        const behindPos = nodePos(oldPath[0]);
+        const dx = newPos.x - behindPos.x;
+        const dy = newPos.y - behindPos.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const perpX = -ny;
+        const perpY = nx;
+        for (const side of [-1, 1]) {
+          wormLayer.appendChild(createSvgElement("circle", {
+            cx: x + nx * 4 + perpX * 6 * side,
+            cy: y + ny * 4 + perpY * 6 * side,
+            r: 4, class: "worm-eye"
+          }));
+        }
+      }
     }
   } else {
-    fadeCount = 0;
-    renderPath = path.map((id) => {
-      const p = nodePos(id);
-      return { x: p.x, y: p.y, opacity: 1 };
-    });
-  }
+    for (let i = 0; i < path.length - 1; i += 1) {
+      const from = nodePos(path[i]);
+      const to = nodePos(path[i + 1]);
+      wormLayer.appendChild(createSvgElement("line", {
+        x1: from.x, y1: from.y, x2: to.x, y2: to.y,
+        class: "worm-edge", opacity: 0.95
+      }));
+    }
 
-  for (let i = 0; i < renderPath.length - 1; i += 1) {
-    const from = renderPath[i];
-    const to = renderPath[i + 1];
-    const opacity = i >= renderPath.length - 1 - fadeCount
-      ? Math.min(from.opacity, to.opacity)
-      : 0.95;
-    const line = createSvgElement("line", {
-      x1: from.x, y1: from.y,
-      x2: to.x, y2: to.y,
-      class: "worm-edge",
-      opacity: opacity
-    });
-    wormLayer.appendChild(line);
-  }
+    for (let i = 0; i < path.length; i += 1) {
+      const pos = nodePos(path[i]);
+      const roleClass = i === 0 ? "worm-head" : (i === path.length - 1 ? "worm-tail" : "worm-body");
+      wormLayer.appendChild(createSvgElement("circle", {
+        cx: pos.x, cy: pos.y, r: 19,
+        class: `worm-node ${roleClass}`, opacity: 1
+      }));
 
-  for (let i = 0; i < renderPath.length; i += 1) {
-    const pos = renderPath[i];
-    const isFadeNode = i >= path.length;
-    const roleClass = i === 0 ? "worm-head" : (isFadeNode ? "worm-tail" : "worm-body");
-    const radius = 19;
-    const circle = createSvgElement("circle", {
-      cx: pos.x, cy: pos.y,
-      r: radius,
-      class: `worm-node ${roleClass}`,
-      opacity: pos.opacity
-    });
-    wormLayer.appendChild(circle);
-
-    if (i === 0 && renderPath.length > 1) {
-      const targetPos = renderPath[0];
-      const behindPos = anim && anim.oldPath
-        ? nodePos(anim.oldPath[0])
-        : renderPath[1];
-      const dx = targetPos.x - behindPos.x;
-      const dy = targetPos.y - behindPos.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const nx = dx / dist;
-      const ny = dy / dist;
-      const perpX = -ny;
-      const perpY = nx;
-      const eyeR = 4;
-      const eyeOffset = 6;
-      const eyeForward = 4;
-      for (const side of [-1, 1]) {
-        const eye = createSvgElement("circle", {
-          cx: targetPos.x + nx * eyeForward + perpX * eyeOffset * side,
-          cy: targetPos.y + ny * eyeForward + perpY * eyeOffset * side,
-          r: eyeR,
-          class: "worm-eye"
-        });
-        wormLayer.appendChild(eye);
+      if (i === 0 && path.length > 1) {
+        const behind = nodePos(path[1]);
+        const dx = pos.x - behind.x;
+        const dy = pos.y - behind.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const perpX = -ny;
+        const perpY = nx;
+        for (const side of [-1, 1]) {
+          wormLayer.appendChild(createSvgElement("circle", {
+            cx: pos.x + nx * 4 + perpX * 6 * side,
+            cy: pos.y + ny * 4 + perpY * 6 * side,
+            r: 4, class: "worm-eye"
+          }));
+        }
       }
     }
   }
