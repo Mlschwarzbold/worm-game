@@ -154,7 +154,7 @@ function renderWorm(svg, data, path, anim) {
   }
 
   const hasAnim = anim && anim.oldPath;
-  const tailAnimated = hasAnim && !anim.isGrowing;
+  const tailAnimated = hasAnim && !anim.isGrowing && path.length > 1;
 
   for (let i = hasAnim ? 1 : 0; i < path.length - 1; i += 1) {
     const from = nodePos(path[i]);
