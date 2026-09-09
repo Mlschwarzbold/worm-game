@@ -156,7 +156,7 @@ function renderWorm(svg, data, path, anim) {
   const hasAnim = anim && anim.oldPath;
   const tailAnimated = hasAnim && !anim.isGrowing;
 
-  for (let i = 0; i < path.length - 1; i += 1) {
+  for (let i = 1; i < path.length - 1; i += 1) {
     const from = nodePos(path[i]);
     const to = nodePos(path[i + 1]);
     wormLayer.appendChild(createSvgElement("line", {
