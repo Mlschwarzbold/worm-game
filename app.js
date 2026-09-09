@@ -227,6 +227,21 @@ function renderWorm(svg, data, path, anim) {
         class: "worm-node worm-tail",
         opacity: 0.4, fill: "#3a7afe"
       }));
+      const lastReal = nodePos(path[path.length - 1]);
+      wormLayer.appendChild(createSvgElement("line", {
+        x1: lastReal.x, y1: lastReal.y,
+        x2: animTailPos.x, y2: animTailPos.y,
+        class: "worm-edge", opacity: 0.6
+      }));
+    }
+
+    if (path.length > 1) {
+      const secondReal = nodePos(path[1]);
+      wormLayer.appendChild(createSvgElement("line", {
+        x1: ghostHeadPos.x, y1: ghostHeadPos.y,
+        x2: secondReal.x, y2: secondReal.y,
+        class: "worm-edge", opacity: 0.6
+      }));
     }
   }
 
