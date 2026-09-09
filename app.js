@@ -185,6 +185,32 @@ function renderWorm(svg, data, path, anim) {
         y: lerp(nodePos(anim.oldPath[0]).y, nodePos(path[0]).y, anim.t) }
     : nodePos(path[0]);
 
+  if (hasAnim) {
+    if (tailAnimated) {
+      const ghostTailPos = nodePos(anim.oldPath[anim.oldPath.length - 1]);
+      const newTailPos = nodePos(path[path.length - 1]);
+      const animTailPos = {
+        x: lerp(ghostTailPos.x, newTailPos.x, anim.t),
+        y: lerp(ghostTailPos.y, newTailPos.y, anim.t)
+      };
+      const lastReal = nodePos(path[path.length - 1]);
+      wormLayer.appendChild(createSvgElement("line", {
+        x1: lastReal.x, y1: lastReal.y,
+        x2: animTailPos.x, y2: animTailPos.y,
+        class: "worm-edge", opacity: 0.6
+      }));
+    }
+
+    if (path.length > 1) {
+      const secondReal = nodePos(path[1]);
+      wormLayer.appendChild(createSvgElement("line", {
+        x1: headPos.x, y1: headPos.y,
+        x2: secondReal.x, y2: secondReal.y,
+        class: "worm-edge", opacity: 0.6
+      }));
+    }
+  }
+
   wormLayer.appendChild(createSvgElement("circle", {
     cx: headPos.x, cy: headPos.y, r: 19,
     class: "worm-node worm-head", opacity: 1
@@ -211,32 +237,6 @@ function renderWorm(svg, data, path, anim) {
       cy: headPos.y + eyeDir.y * 4 + perpY * 6 * side,
       r: 4, class: "worm-eye"
     }));
-  }
-
-  if (hasAnim) {
-    if (tailAnimated) {
-      const ghostTailPos = nodePos(anim.oldPath[anim.oldPath.length - 1]);
-      const newTailPos = nodePos(path[path.length - 1]);
-      const animTailPos = {
-        x: lerp(ghostTailPos.x, newTailPos.x, anim.t),
-        y: lerp(ghostTailPos.y, newTailPos.y, anim.t)
-      };
-      const lastReal = nodePos(path[path.length - 1]);
-      wormLayer.appendChild(createSvgElement("line", {
-        x1: lastReal.x, y1: lastReal.y,
-        x2: animTailPos.x, y2: animTailPos.y,
-        class: "worm-edge", opacity: 0.6
-      }));
-    }
-
-    if (path.length > 1) {
-      const secondReal = nodePos(path[1]);
-      wormLayer.appendChild(createSvgElement("line", {
-        x1: headPos.x, y1: headPos.y,
-        x2: secondReal.x, y2: secondReal.y,
-        class: "worm-edge", opacity: 0.6
-      }));
-    }
   }
 
   svg.appendChild(wormLayer);
