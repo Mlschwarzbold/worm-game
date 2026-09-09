@@ -21,6 +21,70 @@ const gameState = {
   lastEyeDir: null
 };
 
+const confettiCanvas = document.getElementById("confetti-canvas");
+const confettiCtx = confettiCanvas.getContext("2d");
+let confettiParticles = [];
+let confettiRunning = false;
+
+function resizeConfettiCanvas() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeConfettiCanvas);
+resizeConfettiCanvas();
+
+function launchConfetti() {
+  const colors = ["#22c55e", "#3a7afe", "#f2b635", "#da4b4b", "#a855f7", "#ec4899"];
+  confettiParticles = [];
+  for (let i = 0; i < 120; i += 1) {
+    confettiParticles.push({
+      x: Math.random() * confettiCanvas.width,
+      y: confettiCanvas.height + Math.random() * 100,
+      vx: (Math.random() - 0.5) * 8,
+      vy: -(Math.random() * 12 + 8),
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - 0.5) * 10,
+      opacity: 1
+    });
+  }
+  if (!confettiRunning) {
+    confettiRunning = true;
+    requestAnimationFrame(tickConfetti);
+  }
+}
+
+function tickConfetti() {
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  let alive = false;
+  for (const p of confettiParticles) {
+    p.x += p.vx;
+    p.vy += 0.25;
+    p.y += p.vy;
+    p.rotation += p.rotationSpeed;
+    if (p.y > confettiCanvas.height + 50) {
+      p.opacity -= 0.02;
+    }
+    if (p.opacity <= 0) continue;
+    alive = true;
+    confettiCtx.save();
+    confettiCtx.translate(p.x, p.y);
+    confettiCtx.rotate((p.rotation * Math.PI) / 180);
+    confettiCtx.globalAlpha = Math.max(0, p.opacity);
+    confettiCtx.fillStyle = p.color;
+    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    confettiCtx.restore();
+  }
+  if (alive) {
+    requestAnimationFrame(tickConfetti);
+  } else {
+    confettiRunning = false;
+    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  }
+}
+
 function validateGraph({ nodes, edges }) {
   const nodeIds = new Set();
   let startCount = 0;
@@ -488,6 +552,9 @@ function init() {
         gameState.wormLength += 1;
       }
       gameState.isLevelWon = isWinningState(gameState);
+      if (gameState.isLevelWon) {
+        launchConfetti();
+      }
       gameState.animation = {
         oldPath,
         isGrowing: shouldGrowThisMove,
