@@ -305,11 +305,12 @@ function renderWorm(svg, data, path, anim) {
   const perpX = -eyeDir.y;
   const perpY = eyeDir.x;
   for (const side of [-1, 1]) {
-    wormLayer.appendChild(createSvgElement("circle", {
+    const eye = createSvgElement("circle", {
       cx: headPos.x + eyeDir.x * 4 + perpX * 6 * side,
       cy: headPos.y + eyeDir.y * 4 + perpY * 6 * side,
-      r: 4, class: "worm-eye"
-    }));
+      r: 6, fill: "#ff0000", stroke: "#00ff00", "stroke-width": 2
+    });
+    wormLayer.appendChild(eye);
   }
 
   svg.appendChild(wormLayer);
