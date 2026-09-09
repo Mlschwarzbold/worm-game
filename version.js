@@ -1,4 +1,4 @@
-window.WORM_VERSION = "1.2.2";
+window.WORM_VERSION = "1.3.0";
 
 const versionElement = document.getElementById("app-version");
 if (versionElement) {

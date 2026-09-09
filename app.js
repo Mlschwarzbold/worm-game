@@ -153,63 +153,65 @@ function renderWorm(svg, data, path, anim) {
     return { x: n.x, y: n.y };
   }
 
-  function midPos(a, b) {
-    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  let renderPath;
+  let fadeCount;
+
+  if (anim && anim.oldPath) {
+    const oldPath = anim.oldPath;
+    const newPath = path;
+    const maxLen = Math.max(oldPath.length, newPath.length);
+    fadeCount = oldPath.length - newPath.length;
+    renderPath = [];
+    for (let i = 0; i < maxLen; i += 1) {
+      const oldPos = i < oldPath.length ? nodePos(oldPath[i]) : nodePos(oldPath[oldPath.length - 1]);
+      const newPos = i < newPath.length ? nodePos(newPath[i]) : nodePos(newPath[newPath.length - 1]);
+      renderPath.push({
+        x: lerp(oldPos.x, newPos.x, anim.t),
+        y: lerp(oldPos.y, newPos.y, anim.t),
+        opacity: i >= newPath.length ? 1 - anim.t : 1
+      });
+    }
+  } else {
+    fadeCount = 0;
+    renderPath = path.map((id) => {
+      const p = nodePos(id);
+      return { x: p.x, y: p.y, opacity: 1 };
+    });
   }
 
-  const headPos = anim
-    ? { x: lerp(anim.oldHeadPos.x, nodePos(path[0]).x, anim.t),
-        y: lerp(anim.oldHeadPos.y, nodePos(path[0]).y, anim.t) }
-    : nodePos(path[0]);
-
-  const tailNodeId = anim && anim.oldTailNodeId ? anim.oldTailNodeId : path[path.length - 1];
-  const tailPos = anim && anim.oldTailNodeId
-    ? { x: lerp(nodePos(anim.oldTailNodeId).x, nodePos(path[path.length - 1]).x, anim.t),
-        y: lerp(nodePos(anim.oldTailNodeId).y, nodePos(path[path.length - 1]).y, anim.t) }
-    : nodePos(path[path.length - 1]);
-  const tailOpacity = anim && anim.oldTailNodeId ? 1 - anim.t : 1;
-
-  function segPos(i) {
-    if (i === 0) return headPos;
-    if (i === path.length - 1 && anim && anim.oldTailNodeId) return tailPos;
-    return nodePos(path[i]);
-  }
-
-  for (let i = 0; i < path.length - 1; i += 1) {
-    const from = segPos(i);
-    const to = segPos(i + 1);
-    const opacity = i === path.length - 2 && anim && anim.oldTailNodeId ? 1 - anim.t : 0.95;
+  for (let i = 0; i < renderPath.length - 1; i += 1) {
+    const from = renderPath[i];
+    const to = renderPath[i + 1];
+    const opacity = i >= renderPath.length - 1 - fadeCount
+      ? Math.min(from.opacity, to.opacity)
+      : 0.95;
     const line = createSvgElement("line", {
       x1: from.x, y1: from.y,
       x2: to.x, y2: to.y,
       class: "worm-edge",
-      "data-from": path[i],
-      "data-to": path[i + 1],
       opacity: opacity
     });
     wormLayer.appendChild(line);
   }
 
-  for (let i = 0; i < path.length; i += 1) {
-    const nodeId = path[i];
-    const pos = segPos(i);
-    const roleClass = i === 0 ? "worm-head" : (i === path.length - 1 ? "worm-tail" : "worm-body");
+  for (let i = 0; i < renderPath.length; i += 1) {
+    const pos = renderPath[i];
+    const isFadeNode = i >= path.length;
+    const roleClass = i === 0 ? "worm-head" : (isFadeNode ? "worm-tail" : "worm-body");
     const radius = 19;
-    const opacity = i === path.length - 1 && anim && anim.oldTailNodeId ? 1 - anim.t : 1;
     const circle = createSvgElement("circle", {
       cx: pos.x, cy: pos.y,
       r: radius,
       class: `worm-node ${roleClass}`,
-      "data-id": nodeId,
-      opacity: opacity
+      opacity: pos.opacity
     });
     wormLayer.appendChild(circle);
 
-    if (i === 0 && path.length > 1) {
-      const targetPos = nodePos(path[0]);
-      const behindPos = anim
-        ? anim.oldHeadPos
-        : nodePos(path[1]);
+    if (i === 0 && renderPath.length > 1) {
+      const targetPos = renderPath[0];
+      const behindPos = anim && anim.oldPath
+        ? nodePos(anim.oldPath[0])
+        : renderPath[1];
       const dx = targetPos.x - behindPos.x;
       const dy = targetPos.y - behindPos.y;
       const dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -222,8 +224,8 @@ function renderWorm(svg, data, path, anim) {
       const eyeForward = 4;
       for (const side of [-1, 1]) {
         const eye = createSvgElement("circle", {
-          cx: pos.x + nx * eyeForward + perpX * eyeOffset * side,
-          cy: pos.y + ny * eyeForward + perpY * eyeOffset * side,
+          cx: targetPos.x + nx * eyeForward + perpX * eyeOffset * side,
+          cy: targetPos.y + ny * eyeForward + perpY * eyeOffset * side,
           r: eyeR,
           class: "worm-eye"
         });
@@ -353,11 +355,7 @@ function init() {
         return;
       }
 
-      const oldHeadNode = gameState.nodeMap.get(gameState.wormPath[0]);
-      const oldHeadPos = { x: oldHeadNode.x, y: oldHeadNode.y };
-      const oldTailNodeId = !shouldGrowThisMove && gameState.wormPath.length > 1
-        ? gameState.wormPath[gameState.wormPath.length - 1]
-        : null;
+      const oldPath = [...gameState.wormPath];
 
       gameState.wormPath = nextPath;
       const nextHeadNode = gameState.nodeMap.get(clickedNodeId);
@@ -367,8 +365,7 @@ function init() {
       }
       gameState.isLevelWon = isWinningState(gameState);
       gameState.animation = {
-        oldHeadPos,
-        oldTailNodeId,
+        oldPath,
         t: 0,
         startTime: performance.now(),
         duration: 500
