@@ -208,8 +208,7 @@ function renderWorm(svg, data, path, anim) {
 
     wormLayer.appendChild(createSvgElement("circle", {
       cx: ghostHeadPos.x, cy: ghostHeadPos.y, r: 19,
-      class: "worm-node worm-head", opacity: 1,
-      stroke: "#ffffff", "stroke-width": 3
+      class: "worm-node worm-head", opacity: 1
     }));
 
     if (path.length > 1) {
@@ -237,16 +236,6 @@ function renderWorm(svg, data, path, anim) {
         x: lerp(ghostTailPos.x, newTailPos.x, anim.t),
         y: lerp(ghostTailPos.y, newTailPos.y, anim.t)
       };
-      wormLayer.appendChild(createSvgElement("circle", {
-        cx: ghostTailPos.x, cy: ghostTailPos.y, r: 19,
-        class: "worm-node worm-tail",
-        opacity: 0.4, "stroke-dasharray": "4 4"
-      }));
-      wormLayer.appendChild(createSvgElement("circle", {
-        cx: animTailPos.x, cy: animTailPos.y, r: 19,
-        class: "worm-node worm-tail",
-        opacity: 0.4, fill: "#3a7afe"
-      }));
       const lastReal = nodePos(path[path.length - 1]);
       wormLayer.appendChild(createSvgElement("line", {
         x1: lastReal.x, y1: lastReal.y,
