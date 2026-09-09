@@ -180,7 +180,7 @@ body {
 }
 
 .worm-node {
-  fill: var(--worm);
+  fill: var(--worm-head);
   stroke: none;
   pointer-events: none;
 }
@@ -194,8 +194,4 @@ body {
 .worm-eye {
   fill: #ffffff;
   pointer-events: none;
-}
-
-.worm-tail {
-  opacity: 0.88;
 }

@@ -176,7 +176,7 @@ function renderWorm(svg, data, path, anim) {
     const roleClass = isTail ? "worm-tail" : "worm-body";
     wormLayer.appendChild(createSvgElement("circle", {
       cx: pos.x, cy: pos.y, r: 19,
-      class: `worm-node ${roleClass}`, opacity: 0.6
+      class: `worm-node ${roleClass}`, opacity: 1
     }));
   }
 
@@ -420,6 +420,7 @@ function init() {
       animationFrameId = null;
     }
     gameState.animation = null;
+    gameState.lastEyeDir = null;
 
     const level = cloneLevel(levels[index]);
     validateGraph(level);
