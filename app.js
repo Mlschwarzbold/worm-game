@@ -208,7 +208,8 @@ function renderWorm(svg, data, path, anim) {
 
     wormLayer.appendChild(createSvgElement("circle", {
       cx: ghostHeadPos.x, cy: ghostHeadPos.y, r: 19,
-      class: "worm-node worm-head", opacity: 1
+      class: "worm-node worm-head", opacity: 1,
+      stroke: "#ffffff", "stroke-width": 3
     }));
 
     if (path.length > 1) {
