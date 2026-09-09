@@ -158,7 +158,7 @@ function renderWorm(svg, data, path) {
     const nodeId = path[i];
     const node = map.get(nodeId);
     const roleClass = i === 0 ? "worm-head" : (i === path.length - 1 ? "worm-tail" : "worm-body");
-    const radius = i === 0 ? 12 : 10;
+    const radius = i === 0 ? 13 : 10;
     const circle = createSvgElement("circle", {
       cx: node.x,
       cy: node.y,
@@ -167,6 +167,29 @@ function renderWorm(svg, data, path) {
       "data-id": nodeId
     });
     wormLayer.appendChild(circle);
+
+    if (i === 0 && path.length > 1) {
+      const next = map.get(path[1]);
+      const dx = node.x - next.x;
+      const dy = node.y - next.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const nx = dx / dist;
+      const ny = dy / dist;
+      const perpX = -ny;
+      const perpY = nx;
+      const eyeR = 3;
+      const eyeOffset = 4;
+      const eyeForward = 3;
+      for (const side of [-1, 1]) {
+        const eye = createSvgElement("circle", {
+          cx: node.x + nx * eyeForward + perpX * eyeOffset * side,
+          cy: node.y + ny * eyeForward + perpY * eyeOffset * side,
+          r: eyeR,
+          class: "worm-eye"
+        });
+        wormLayer.appendChild(eye);
+      }
+    }
   }
 
   svg.appendChild(wormLayer);
