@@ -169,66 +169,45 @@ function renderWorm(svg, data, path, anim) {
     const isHead = i === 0;
     const isTail = i === path.length - 1;
     if (isTail && tailAnimated) continue;
-    if (isHead && hasAnim) continue;
+    if (isHead) continue;
 
     const pos = nodePos(path[i]);
-    const roleClass = isHead ? "worm-head" : (isTail ? "worm-tail" : "worm-body");
-    const opacity = isHead ? 1 : 0.6;
+    const roleClass = isTail ? "worm-tail" : "worm-body";
     wormLayer.appendChild(createSvgElement("circle", {
       cx: pos.x, cy: pos.y, r: 19,
-      class: `worm-node ${roleClass}`, opacity: opacity
+      class: `worm-node ${roleClass}`, opacity: 0.6
     }));
+  }
 
-    if (isHead && path.length > 1) {
-      const behind = nodePos(path[1]);
-      const dx = pos.x - behind.x;
-      const dy = pos.y - behind.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const nx = dx / dist;
-      const ny = dy / dist;
-      const perpX = -ny;
-      const perpY = nx;
-      for (const side of [-1, 1]) {
-        wormLayer.appendChild(createSvgElement("circle", {
-          cx: pos.x + nx * 4 + perpX * 6 * side,
-          cy: pos.y + ny * 4 + perpY * 6 * side,
-          r: 4, class: "worm-eye"
-        }));
-      }
+  const headPos = hasAnim
+    ? { x: lerp(nodePos(anim.oldPath[0]).x, nodePos(path[0]).x, anim.t),
+        y: lerp(nodePos(anim.oldPath[0]).y, nodePos(path[0]).y, anim.t) }
+    : nodePos(path[0]);
+
+  wormLayer.appendChild(createSvgElement("circle", {
+    cx: headPos.x, cy: headPos.y, r: 19,
+    class: "worm-node worm-head", opacity: 1
+  }));
+
+  if (path.length > 1) {
+    const behind = hasAnim ? nodePos(anim.oldPath[0]) : nodePos(path[1]);
+    const dx = headPos.x - behind.x;
+    const dy = headPos.y - behind.y;
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const perpX = -ny;
+    const perpY = nx;
+    for (const side of [-1, 1]) {
+      wormLayer.appendChild(createSvgElement("circle", {
+        cx: headPos.x + nx * 4 + perpX * 6 * side,
+        cy: headPos.y + ny * 4 + perpY * 6 * side,
+        r: 4, class: "worm-eye"
+      }));
     }
   }
 
   if (hasAnim) {
-    const oldHeadPos = nodePos(anim.oldPath[0]);
-    const newHeadPos = nodePos(path[0]);
-    const ghostHeadPos = {
-      x: lerp(oldHeadPos.x, newHeadPos.x, anim.t),
-      y: lerp(oldHeadPos.y, newHeadPos.y, anim.t)
-    };
-
-    wormLayer.appendChild(createSvgElement("circle", {
-      cx: ghostHeadPos.x, cy: ghostHeadPos.y, r: 19,
-      class: "worm-node worm-head", opacity: 1
-    }));
-
-    if (path.length > 1) {
-      const behind = nodePos(path[1]);
-      const dx = ghostHeadPos.x - behind.x;
-      const dy = ghostHeadPos.y - behind.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const nx = dx / dist;
-      const ny = dy / dist;
-      const perpX = -ny;
-      const perpY = nx;
-      for (const side of [-1, 1]) {
-        wormLayer.appendChild(createSvgElement("circle", {
-          cx: ghostHeadPos.x + nx * 4 + perpX * 6 * side,
-          cy: ghostHeadPos.y + ny * 4 + perpY * 6 * side,
-          r: 4, class: "worm-eye"
-        }));
-      }
-    }
-
     if (tailAnimated) {
       const ghostTailPos = nodePos(anim.oldPath[anim.oldPath.length - 1]);
       const newTailPos = nodePos(path[path.length - 1]);
@@ -247,7 +226,7 @@ function renderWorm(svg, data, path, anim) {
     if (path.length > 1) {
       const secondReal = nodePos(path[1]);
       wormLayer.appendChild(createSvgElement("line", {
-        x1: ghostHeadPos.x, y1: ghostHeadPos.y,
+        x1: headPos.x, y1: headPos.y,
         x2: secondReal.x, y2: secondReal.y,
         class: "worm-edge", opacity: 0.6
       }));
