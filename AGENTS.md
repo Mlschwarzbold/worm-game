@@ -161,6 +161,19 @@ docker run --rm -p 6000:80 worm-game
 node scripts/generate-level-manifest.js
 ```
 
+## Level Editor Interactions
+
+| Action | Result |
+|---|---|
+| **Click node** | Selects node + shows type-change context menu (normal/start/end/food) |
+| **Ctrl/Cmd + click node** | Selects second node; toggles edge between first and second selected nodes |
+| **Click canvas** | Shows create-node context menu at click position |
+| **Drag node** | Moves node (context menu suppressed if drag occurred) |
+| **Right-click node** | Shows type-change context menu (same as left-click) |
+| **Right-click canvas** | Shows create-node context menu (same as left-click) |
+
+Second selected node gets an orange stroke (`#f97316`). First selected gets blue (`#3a7afe`).
+
 ## Common Pitfalls
 
 - **SVG rendering order:** Elements appended later appear on top. The head and eyes MUST be the last elements in `worm-layer`.

@@ -169,3 +169,47 @@ textarea {
   text-anchor: middle;
   pointer-events: none;
 }
+
+.node-second-selected {
+  stroke: #f97316;
+  stroke-width: 4;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+  min-width: 140px;
+  font-size: 0.9rem;
+}
+
+.context-menu.hidden {
+  display: none;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  border-radius: 0;
+}
+
+.context-menu-item:hover {
+  background: #f0f0f0;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: #ececec;
+  margin: 4px 0;
+}

@@ -5,8 +5,11 @@ const state = {
   levelIndex: 0,
   level: null,
   selectedNodeId: null,
+  secondSelectedNodeId: null,
   dragNodeId: null
 };
+
+let didDrag = false;
 
 function cloneLevel(level) {
   return {
@@ -117,6 +120,48 @@ function svgPoint(svg, event) {
   return point.matrixTransform(ctm.inverse());
 }
 
+function showContextMenu(x, y, items) {
+  const menu = document.getElementById("context-menu");
+  if (!(menu instanceof HTMLElement)) {
+    return;
+  }
+  menu.innerHTML = "";
+  for (const item of items) {
+    if (item.separator) {
+      const sep = document.createElement("div");
+      sep.className = "context-menu-separator";
+      menu.appendChild(sep);
+      continue;
+    }
+    const button = document.createElement("button");
+    button.className = "context-menu-item";
+    button.textContent = item.label;
+    button.addEventListener("click", () => {
+      hideContextMenu();
+      item.action();
+    });
+    menu.appendChild(button);
+  }
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+  menu.classList.remove("hidden");
+
+  const rect = menu.getBoundingClientRect();
+  if (rect.right > window.innerWidth) {
+    menu.style.left = `${x - rect.width}px`;
+  }
+  if (rect.bottom > window.innerHeight) {
+    menu.style.top = `${y - rect.height}px`;
+  }
+}
+
+function hideContextMenu() {
+  const menu = document.getElementById("context-menu");
+  if (menu instanceof HTMLElement) {
+    menu.classList.add("hidden");
+  }
+}
+
 function updateNodeControls() {
   const selectedNodeLabel = document.getElementById("selected-node");
   const nodeTypeSelect = document.getElementById("node-type");
@@ -211,9 +256,13 @@ function renderGraph() {
 
   for (const node of state.level.nodes) {
     const isSelected = node.id === state.selectedNodeId;
+    const isSecondSelected = node.id === state.secondSelectedNodeId;
     const classes = ["node", `node-${node.type}`];
     if (isSelected) {
       classes.push("node-selected");
+    }
+    if (isSecondSelected) {
+      classes.push("node-second-selected");
     }
 
     const circle = createSvgElement("circle", {
@@ -225,6 +274,10 @@ function renderGraph() {
     });
     circle.addEventListener("mousedown", (event) => {
       event.preventDefault();
+      if (event.ctrlKey || event.metaKey) {
+        return;
+      }
+      didDrag = false;
       state.selectedNodeId = node.id;
       state.dragNodeId = node.id;
       updateNodeControls();
@@ -233,10 +286,74 @@ function renderGraph() {
     });
     circle.addEventListener("click", (event) => {
       event.preventDefault();
+      event.stopPropagation();
+
+      if (event.ctrlKey || event.metaKey) {
+        if (state.selectedNodeId && state.selectedNodeId !== node.id) {
+          const existingKey = edgeKey(state.selectedNodeId, node.id);
+          const existingEdgeKeys = new Set(state.level.edges.map(([a, b]) => edgeKey(a, b)));
+          if (existingEdgeKeys.has(existingKey)) {
+            state.level.edges = state.level.edges.filter(([a, b]) => edgeKey(a, b) !== existingKey);
+          } else {
+            state.level.edges.push([state.selectedNodeId, node.id]);
+          }
+          state.secondSelectedNodeId = node.id;
+          refreshUI();
+          return;
+        }
+        state.secondSelectedNodeId = state.secondSelectedNodeId === node.id ? null : node.id;
+        renderGraph();
+        return;
+      }
+
+      state.selectedNodeId = node.id;
+      state.secondSelectedNodeId = null;
+      updateNodeControls();
+      updateEdgeControls();
+      renderGraph();
+
+      if (didDrag) return;
+
+      const typeItems = ["normal", "start", "end", "food"].map((t) => ({
+        label: t,
+        action: () => {
+          const n = getNodeById(state.level, node.id);
+          if (!n) return;
+          if (n.type === "start" && t !== "start") {
+            const otherStartCount = state.level.nodes.filter((c) => c.id !== n.id && c.type === "start").length;
+            if (otherStartCount === 0) return;
+          }
+          n.type = t;
+          if (t === "start") ensureSingleStart(state.level, n.id);
+          ensureAtLeastOneStart(state.level);
+          refreshUI();
+        }
+      }));
+      showContextMenu(event.clientX, event.clientY, typeItems);
+    });
+    circle.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       state.selectedNodeId = node.id;
       updateNodeControls();
       updateEdgeControls();
       renderGraph();
+      const typeItems = ["normal", "start", "end", "food"].map((t) => ({
+        label: t,
+        action: () => {
+          const n = getNodeById(state.level, node.id);
+          if (!n) return;
+          if (n.type === "start" && t !== "start") {
+            const otherStartCount = state.level.nodes.filter((c) => c.id !== n.id && c.type === "start").length;
+            if (otherStartCount === 0) return;
+          }
+          n.type = t;
+          if (t === "start") ensureSingleStart(state.level, n.id);
+          ensureAtLeastOneStart(state.level);
+          refreshUI();
+        }
+      }));
+      showContextMenu(event.clientX, event.clientY, typeItems);
     });
 
     const label = createSvgElement("text", {
@@ -286,6 +403,7 @@ function loadLevel(index) {
   state.level = cloneLevel(editorLevels[index]);
   ensureAtLeastOneStart(state.level);
   state.selectedNodeId = null;
+  state.secondSelectedNodeId = null;
   state.dragNodeId = null;
   refreshUI();
 }
@@ -456,11 +574,52 @@ function initEditor() {
     if (!node) {
       return;
     }
+    didDrag = true;
     const point = svgPoint(svg, event);
     node.x = Math.max(20, Math.min(780, point.x));
     node.y = Math.max(20, Math.min(580, point.y));
     updateNodeControls();
     renderGraph();
+  });
+
+  svg.addEventListener("click", (event) => {
+    if (event.target !== svg) return;
+    hideContextMenu();
+    const point = svgPoint(svg, event);
+    const items = ["normal", "start", "end", "food"].map((t) => ({
+      label: `Create ${t}`,
+      action: () => {
+        const id = uniqueNodeId(state.level);
+        const newNode = { id, x: Math.round(point.x), y: Math.round(point.y), type: t };
+        state.level.nodes.push(newNode);
+        if (t === "start") ensureSingleStart(state.level, id);
+        ensureAtLeastOneStart(state.level);
+        state.selectedNodeId = id;
+        state.secondSelectedNodeId = null;
+        refreshUI();
+      }
+    }));
+    showContextMenu(event.clientX, event.clientY, items);
+  });
+
+  svg.addEventListener("contextmenu", (event) => {
+    if (event.target !== svg) return;
+    event.preventDefault();
+    const point = svgPoint(svg, event);
+    const items = ["normal", "start", "end", "food"].map((t) => ({
+      label: `Create ${t}`,
+      action: () => {
+        const id = uniqueNodeId(state.level);
+        const newNode = { id, x: Math.round(point.x), y: Math.round(point.y), type: t };
+        state.level.nodes.push(newNode);
+        if (t === "start") ensureSingleStart(state.level, id);
+        ensureAtLeastOneStart(state.level);
+        state.selectedNodeId = id;
+        state.secondSelectedNodeId = null;
+        refreshUI();
+      }
+    }));
+    showContextMenu(event.clientX, event.clientY, items);
   });
 
   const stopDragging = () => {
@@ -469,6 +628,13 @@ function initEditor() {
   svg.addEventListener("mouseup", stopDragging);
   svg.addEventListener("mouseleave", stopDragging);
   window.addEventListener("mouseup", stopDragging);
+
+  document.addEventListener("click", (event) => {
+    const menu = document.getElementById("context-menu");
+    if (menu && !menu.contains(event.target)) {
+      hideContextMenu();
+    }
+  });
 
   loadLevel(0);
 }
