@@ -440,6 +440,90 @@ function playtestLevel() {
   window.open("playtest.html", "_blank");
 }
 
+function showImportError(msg) {
+  const el = document.getElementById("import-error");
+  if (el) el.textContent = msg;
+}
+
+function clearImportError() {
+  showImportError("");
+}
+
+function validateImportedLevel(level) {
+  if (!level || typeof level !== "object") {
+    return "Level must be a JSON object.";
+  }
+  if (typeof level.id !== "string" || !level.id) {
+    return "Level must have a string \"id\" field.";
+  }
+  if (typeof level.name !== "string" || !level.name) {
+    return "Level must have a string \"name\" field.";
+  }
+  if (!Array.isArray(level.nodes) || level.nodes.length === 0) {
+    return "Level must have a non-empty \"nodes\" array.";
+  }
+  if (!Array.isArray(level.edges)) {
+    return "Level must have an \"edges\" array.";
+  }
+  const ids = new Set();
+  let startCount = 0;
+  for (const node of level.nodes) {
+    if (!node.id || typeof node.id !== "string") {
+      return "Each node must have a string \"id\".";
+    }
+    if (typeof node.x !== "number" || typeof node.y !== "number") {
+      return `Node "${node.id}" must have numeric x and y.`;
+    }
+    if (!node.type) {
+      return `Node "${node.id}" is missing a type.`;
+    }
+    if (ids.has(node.id)) {
+      return `Duplicate node id: "${node.id}".`;
+    }
+    ids.add(node.id);
+    if (node.type === "start") startCount += 1;
+  }
+  if (startCount !== 1) {
+    return `Must have exactly 1 start node (found ${startCount}).`;
+  }
+  const edgeSet = new Set();
+  for (const edge of level.edges) {
+    if (!Array.isArray(edge) || edge.length !== 2) {
+      return "Each edge must be a [from, to] pair.";
+    }
+    const [a, b] = edge;
+    if (!ids.has(a) || !ids.has(b)) {
+      return `Edge "${a}-${b}" references a non-existent node.`;
+    }
+    const key = [a, b].sort().join("-");
+    if (edgeSet.has(key)) {
+      return `Duplicate edge: "${a}-${b}".`;
+    }
+    edgeSet.add(key);
+  }
+  return null;
+}
+
+function importLevelJson(jsonString) {
+  clearImportError();
+  let level;
+  try {
+    level = JSON.parse(jsonString);
+  } catch (e) {
+    showImportError("Invalid JSON: " + e.message);
+    return false;
+  }
+  const error = validateImportedLevel(level);
+  if (error) {
+    showImportError(error);
+    return false;
+  }
+  persistCurrentLevelDraft();
+  editorLevels.push(cloneLevel(level));
+  loadLevel(editorLevels.length - 1);
+  return true;
+}
+
 function initEditor() {
   if (editorLevels.length === 0) {
     throw new Error("No levels loaded. Include level files before editor.js.");
@@ -460,6 +544,9 @@ function initEditor() {
   const exportButton = document.getElementById("export-level");
   const downloadButton = document.getElementById("download-json");
   const playtestButton = document.getElementById("playtest-level");
+  const importButton = document.getElementById("import-button");
+  const importFile = document.getElementById("import-file");
+  const importInput = document.getElementById("import-input");
 
   if (!(svg instanceof SVGSVGElement)) {
     throw new Error("Missing editor graph.");
@@ -478,6 +565,9 @@ function initEditor() {
   }
   if (!(addEdgeButton instanceof HTMLButtonElement) || !(deleteEdgeButton instanceof HTMLButtonElement) || !(exportButton instanceof HTMLButtonElement) || !(downloadButton instanceof HTMLButtonElement) || !(playtestButton instanceof HTMLButtonElement)) {
     throw new Error("Missing edge/export action buttons.");
+  }
+  if (!(importButton instanceof HTMLButtonElement) || !(importFile instanceof HTMLInputElement) || !(importInput instanceof HTMLTextAreaElement)) {
+    throw new Error("Missing import controls.");
   }
 
   levelSelect.addEventListener("change", () => {
@@ -595,6 +685,30 @@ function initEditor() {
 
   playtestButton.addEventListener("click", () => {
     playtestLevel();
+  });
+
+  importButton.addEventListener("click", () => {
+    const text = importInput.value.trim();
+    if (!text) {
+      showImportError("Paste level JSON first.");
+      return;
+    }
+    if (importLevelJson(text)) {
+      importInput.value = "";
+    }
+  });
+
+  importFile.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (importLevelJson(reader.result)) {
+        importInput.value = "";
+      }
+    };
+    reader.readAsText(file);
+    importFile.value = "";
   });
 
   svg.addEventListener("mousemove", (event) => {
