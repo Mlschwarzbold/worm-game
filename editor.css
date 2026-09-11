@@ -213,3 +213,11 @@ textarea {
   background: #ececec;
   margin: 4px 0;
 }
+
+#playtest-level {
+  width: 100%;
+  border-color: #bad8ff;
+  background: #edf4ff;
+  color: #1a56db;
+  font-weight: 600;
+}

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playtest — Worm Game</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .playtest-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .playtest-bar button {
+      border: 1px solid #d8d8d8;
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .playtest-bar button:hover {
+      background: #f5f5f5;
+    }
+    .playtest-label {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    #playtest-error {
+      color: var(--end);
+      font-size: 0.95rem;
+      text-align: center;
+      padding: 40px 20px;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div class="playtest-bar">
+        <button id="back-to-editor" type="button">← Back to Editor</button>
+        <span class="playtest-label">Playtest Mode</span>
+      </div>
+    </header>
+
+    <div id="playtest-error" hidden></div>
+
+    <section id="game-area">
+      <section class="level-controls" aria-label="Level controls">
+        <button id="prev-level" type="button" disabled>Previous Level</button>
+        <div class="level-info">
+          <strong id="level-name">Level</strong>
+          <span id="level-meta"></span>
+        </div>
+        <button id="next-level" type="button" disabled>Next Level</button>
+      </section>
+
+      <section class="board-wrap">
+        <svg id="graph" class="board" viewBox="0 0 800 600" role="img" aria-label="Puzzle graph"></svg>
+      </section>
+      <canvas id="confetti-canvas"></canvas>
+
+      <section class="bottom-controls" aria-label="Game controls">
+        <button id="retry-level" type="button">Retry Level</button>
+        <button id="win-next-level" type="button" hidden>Go to Next Level</button>
+        <span id="win-message" hidden>Level complete!</span>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">Worm Game <span id="app-version"></span></footer>
+  <script>window.WORM_CUSTOM_PAGE = true;</script>
+  <script src="version.js"></script>
+  <script src="levels/manifest.js"></script>
+  <script src="app.js"></script>
+  <script src="playtest.js"></script>
+</body>
+</html>

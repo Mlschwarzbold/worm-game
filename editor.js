@@ -433,6 +433,13 @@ function downloadJson() {
   URL.revokeObjectURL(url);
 }
 
+function playtestLevel() {
+  persistCurrentLevelDraft();
+  const level = cloneLevel(state.level);
+  sessionStorage.setItem("worm-playtest-level", JSON.stringify(level));
+  window.open("playtest.html", "_blank");
+}
+
 function initEditor() {
   if (editorLevels.length === 0) {
     throw new Error("No levels loaded. Include level files before editor.js.");
@@ -452,6 +459,7 @@ function initEditor() {
   const deleteEdgeButton = document.getElementById("delete-edge");
   const exportButton = document.getElementById("export-level");
   const downloadButton = document.getElementById("download-json");
+  const playtestButton = document.getElementById("playtest-level");
 
   if (!(svg instanceof SVGSVGElement)) {
     throw new Error("Missing editor graph.");
@@ -468,7 +476,7 @@ function initEditor() {
   if (!(edgeFromSelect instanceof HTMLSelectElement) || !(edgeToSelect instanceof HTMLSelectElement) || !(edgeList instanceof HTMLSelectElement)) {
     throw new Error("Missing edge controls.");
   }
-  if (!(addEdgeButton instanceof HTMLButtonElement) || !(deleteEdgeButton instanceof HTMLButtonElement) || !(exportButton instanceof HTMLButtonElement) || !(downloadButton instanceof HTMLButtonElement)) {
+  if (!(addEdgeButton instanceof HTMLButtonElement) || !(deleteEdgeButton instanceof HTMLButtonElement) || !(exportButton instanceof HTMLButtonElement) || !(downloadButton instanceof HTMLButtonElement) || !(playtestButton instanceof HTMLButtonElement)) {
     throw new Error("Missing edge/export action buttons.");
   }
 
@@ -583,6 +591,10 @@ function initEditor() {
 
   downloadButton.addEventListener("click", () => {
     downloadJson();
+  });
+
+  playtestButton.addEventListener("click", () => {
+    playtestLevel();
   });
 
   svg.addEventListener("mousemove", (event) => {
