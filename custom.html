@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Levels — Worm Game</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="custom.css">
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <h1>Custom Levels</h1>
+      <p>Import a level from the editor and play it here.</p>
+      <p><a href="index.html">Back to Game</a> · <a href="editor.html">Open Level Editor</a></p>
+    </header>
+
+    <section class="import-section" id="import-section">
+      <h2>Import Level</h2>
+      <div class="import-row">
+        <textarea id="import-text" placeholder='Paste level JSON here...'></textarea>
+        <div class="import-actions">
+          <button id="import-button" type="button">Import</button>
+        </div>
+      </div>
+      <div class="file-upload">
+        <label>
+          Or upload a .json file
+          <input type="file" id="import-file" accept=".json,application/json">
+        </label>
+      </div>
+      <div id="import-error"></div>
+
+      <div class="saved-section">
+        <h2>Saved Levels</h2>
+        <ul id="saved-list"></ul>
+      </div>
+    </section>
+
+    <section class="game-section" id="game-section">
+      <button id="back-to-import" class="back-button" type="button">← Back to Import</button>
+
+      <section class="level-controls" aria-label="Level controls">
+        <button id="prev-level" type="button" disabled>Previous Level</button>
+        <div class="level-info">
+          <strong id="level-name">Level</strong>
+          <span id="level-meta"></span>
+        </div>
+        <button id="next-level" type="button" disabled>Next Level</button>
+      </section>
+
+      <section class="board-wrap">
+        <svg id="graph" class="board" viewBox="0 0 800 600" role="img" aria-label="Puzzle graph"></svg>
+      </section>
+      <canvas id="confetti-canvas"></canvas>
+
+      <section class="bottom-controls" aria-label="Game controls">
+        <button id="retry-level" type="button">Retry Level</button>
+        <button id="win-next-level" type="button" hidden>Go to Next Level</button>
+        <span id="win-message" hidden>Level complete!</span>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">Worm Game <span id="app-version"></span></footer>
+  <script>window.WORM_CUSTOM_PAGE = true;</script>
+  <script src="version.js"></script>
+  <script src="levels/manifest.js"></script>
+  <script src="app.js"></script>
+  <script src="custom.js"></script>
+</body>
+</html>

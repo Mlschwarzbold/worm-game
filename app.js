@@ -21,6 +21,15 @@ const gameState = {
   lastEyeDir: null
 };
 
+const ctrl = {
+  gameLevels: levels,
+  animationFrameId: null,
+  loadLevel: null,
+  renderCurrentState: null
+};
+
+let initDone = false;
+
 const confettiCanvas = document.getElementById("confetti-canvas");
 const confettiCtx = confettiCanvas.getContext("2d");
 let confettiParticles = [];
@@ -373,8 +382,9 @@ function renderGraph(svg, data, state, onNodeClick) {
   renderWorm(svg, data, state.wormPath, state.animation);
 }
 
-function init() {
-  if (levels.length === 0) {
+function init(customLevels) {
+  ctrl.gameLevels = customLevels || levels;
+  if (ctrl.gameLevels.length === 0) {
     throw new Error("No levels loaded. Add level files to levels/ and include them in index.html.");
   }
 
@@ -406,100 +416,16 @@ function init() {
   proximityState.svg = svg;
   const PROXIMITY_RADIUS = 60;
 
-  svg.addEventListener("mousemove", (e) => {
-    const rect = svg.getBoundingClientRect();
-    const scaleX = svg.viewBox.baseVal.width / rect.width;
-    const scaleY = svg.viewBox.baseVal.height / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const my = (e.clientY - rect.top) * scaleY;
-
-    const head = gameState.wormPath[0];
-    const reachable = head && gameState.neighbors.get(head)
-      ? new Set([...gameState.neighbors.get(head)].filter((id) => !gameState.wormPath.includes(id)))
-      : new Set();
-
-    let closest = null;
-    let closestDist = Infinity;
-
-    for (const node of proximityState.nodeCircles) {
-      const dx = mx - node.x;
-      const dy = my - node.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < PROXIMITY_RADIUS) {
-        const intensity = 1 - dist / PROXIMITY_RADIUS;
-        const blur = 4 + intensity * 12;
-        node.el.style.filter = `drop-shadow(0 0 ${blur}px rgba(180, 180, 180, ${0.3 + intensity * 0.5}))`;
-      } else {
-        node.el.style.filter = "";
-      }
-
-      if (dist < closestDist) {
-        closestDist = dist;
-        closest = node;
-      }
-    }
-
-    if (closest && closestDist < PROXIMITY_RADIUS) {
-      const color = reachable.has(closest.id) ? "#22c55e" : "#999999";
-      proximityState.highlightCircle.setAttribute("cx", closest.x);
-      proximityState.highlightCircle.setAttribute("cy", closest.y);
-      proximityState.highlightCircle.setAttribute("stroke", color);
-      proximityState.highlightCircle.setAttribute("visibility", "visible");
-    } else {
-      proximityState.highlightCircle.setAttribute("visibility", "hidden");
-    }
-  });
-
-  svg.addEventListener("mouseleave", () => {
-    for (const node of proximityState.nodeCircles) {
-      node.el.style.filter = "";
-    }
-    proximityState.highlightCircle.setAttribute("visibility", "hidden");
-  });
-
-  svg.addEventListener("click", (e) => {
-    if (e.target !== svg && !e.target.classList.contains("edge")) return;
-
-    const rect = svg.getBoundingClientRect();
-    const scaleX = svg.viewBox.baseVal.width / rect.width;
-    const scaleY = svg.viewBox.baseVal.height / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const my = (e.clientY - rect.top) * scaleY;
-
-    const head = gameState.wormPath[0];
-    const reachable = head && gameState.neighbors.get(head)
-      ? new Set([...gameState.neighbors.get(head)].filter((id) => !gameState.wormPath.includes(id)))
-      : new Set();
-
-    let closest = null;
-    let closestDist = Infinity;
-
-    for (const node of proximityState.nodeCircles) {
-      const dx = mx - node.x;
-      const dy = my - node.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closest = node;
-      }
-    }
-
-    if (closest && closestDist < PROXIMITY_RADIUS && reachable.has(closest.id)) {
-      proximityState.onNodeClick(closest.id);
-    }
-  });
-
   function updateHeader() {
     const level = gameState.currentLevel;
     levelName.textContent = level.name;
-    levelMeta.textContent = `Level ${gameState.levelIndex + 1}/${levels.length} · Length ${gameState.wormPath.length}/${gameState.wormLength}`;
+    levelMeta.textContent = `Level ${gameState.levelIndex + 1}/${ctrl.gameLevels.length} · Length ${gameState.wormPath.length}/${gameState.wormLength}`;
     prevButton.disabled = gameState.levelIndex === 0;
-    nextButton.disabled = gameState.levelIndex === levels.length - 1;
+    nextButton.disabled = gameState.levelIndex === ctrl.gameLevels.length - 1;
   }
 
   function updateBottomControls() {
-    const hasNextLevel = gameState.levelIndex < levels.length - 1;
+    const hasNextLevel = gameState.levelIndex < ctrl.gameLevels.length - 1;
     winNextButton.hidden = !(gameState.isLevelWon && hasNextLevel);
     winMessage.hidden = !gameState.isLevelWon;
     retryButton.disabled = false;
@@ -566,51 +492,52 @@ function init() {
       };
       updateHeader();
       updateBottomControls();
+      ctrl.renderCurrentState = renderCurrentState;
       startAnimation();
     });
     updateHeader();
     updateBottomControls();
   }
 
-  let animationFrameId = null;
+  ctrl.renderCurrentState = renderCurrentState;
 
   function startAnimation() {
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
+    if (ctrl.animationFrameId) {
+      cancelAnimationFrame(ctrl.animationFrameId);
     }
-    animationFrameId = requestAnimationFrame(tick);
+    ctrl.animationFrameId = requestAnimationFrame(tick);
   }
 
   function tick(now) {
     const anim = gameState.animation;
     if (!anim) {
-      animationFrameId = null;
+      ctrl.animationFrameId = null;
       return;
     }
     const elapsed = now - anim.startTime;
     const rawT = Math.min(elapsed / anim.duration, 1);
     anim.t = easeInOutCubic(rawT);
 
-    renderCurrentState();
+    ctrl.renderCurrentState();
 
     if (rawT < 1) {
-      animationFrameId = requestAnimationFrame(tick);
+      ctrl.animationFrameId = requestAnimationFrame(tick);
     } else {
-    gameState.animation = null;
-      animationFrameId = null;
-      renderCurrentState();
+      gameState.animation = null;
+      ctrl.animationFrameId = null;
+      ctrl.renderCurrentState();
     }
   }
 
   function loadLevel(index) {
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
+    if (ctrl.animationFrameId) {
+      cancelAnimationFrame(ctrl.animationFrameId);
+      ctrl.animationFrameId = null;
     }
     gameState.animation = null;
     gameState.lastEyeDir = null;
 
-    const level = cloneLevel(levels[index]);
+    const level = cloneLevel(ctrl.gameLevels[index]);
     validateGraph(level);
 
     gameState.levelIndex = index;
@@ -625,29 +552,121 @@ function init() {
     renderCurrentState();
   }
 
-  prevButton.addEventListener("click", () => {
-    if (gameState.levelIndex > 0) {
-      loadLevel(gameState.levelIndex - 1);
-    }
-  });
+  ctrl.loadLevel = loadLevel;
 
-  nextButton.addEventListener("click", () => {
-    if (gameState.levelIndex < levels.length - 1) {
-      loadLevel(gameState.levelIndex + 1);
-    }
-  });
+  if (!initDone) {
+    svg.addEventListener("mousemove", (e) => {
+      const rect = svg.getBoundingClientRect();
+      const scaleX = svg.viewBox.baseVal.width / rect.width;
+      const scaleY = svg.viewBox.baseVal.height / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top) * scaleY;
 
-  retryButton.addEventListener("click", () => {
-    loadLevel(gameState.levelIndex);
-  });
+      const head = gameState.wormPath[0];
+      const reachable = head && gameState.neighbors.get(head)
+        ? new Set([...gameState.neighbors.get(head)].filter((id) => !gameState.wormPath.includes(id)))
+        : new Set();
 
-  winNextButton.addEventListener("click", () => {
-    if (gameState.isLevelWon && gameState.levelIndex < levels.length - 1) {
-      loadLevel(gameState.levelIndex + 1);
-    }
-  });
+      let closest = null;
+      let closestDist = Infinity;
+
+      for (const node of proximityState.nodeCircles) {
+        const dx = mx - node.x;
+        const dy = my - node.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < PROXIMITY_RADIUS) {
+          const intensity = 1 - dist / PROXIMITY_RADIUS;
+          const blur = 4 + intensity * 12;
+          node.el.style.filter = `drop-shadow(0 0 ${blur}px rgba(180, 180, 180, ${0.3 + intensity * 0.5}))`;
+        } else {
+          node.el.style.filter = "";
+        }
+
+        if (dist < closestDist) {
+          closestDist = dist;
+          closest = node;
+        }
+      }
+
+      if (closest && closestDist < PROXIMITY_RADIUS) {
+        const color = reachable.has(closest.id) ? "#22c55e" : "#999999";
+        proximityState.highlightCircle.setAttribute("cx", closest.x);
+        proximityState.highlightCircle.setAttribute("cy", closest.y);
+        proximityState.highlightCircle.setAttribute("stroke", color);
+        proximityState.highlightCircle.setAttribute("visibility", "visible");
+      } else {
+        proximityState.highlightCircle.setAttribute("visibility", "hidden");
+      }
+    });
+
+    svg.addEventListener("mouseleave", () => {
+      for (const node of proximityState.nodeCircles) {
+        node.el.style.filter = "";
+      }
+      proximityState.highlightCircle.setAttribute("visibility", "hidden");
+    });
+
+    svg.addEventListener("click", (e) => {
+      if (e.target !== svg && !e.target.classList.contains("edge")) return;
+
+      const rect = svg.getBoundingClientRect();
+      const scaleX = svg.viewBox.baseVal.width / rect.width;
+      const scaleY = svg.viewBox.baseVal.height / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top) * scaleY;
+
+      const head = gameState.wormPath[0];
+      const reachable = head && gameState.neighbors.get(head)
+        ? new Set([...gameState.neighbors.get(head)].filter((id) => !gameState.wormPath.includes(id)))
+        : new Set();
+
+      let closest = null;
+      let closestDist = Infinity;
+
+      for (const node of proximityState.nodeCircles) {
+        const dx = mx - node.x;
+        const dy = my - node.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closest = node;
+        }
+      }
+
+      if (closest && closestDist < PROXIMITY_RADIUS && reachable.has(closest.id)) {
+        proximityState.onNodeClick(closest.id);
+      }
+    });
+
+    prevButton.addEventListener("click", () => {
+      if (gameState.levelIndex > 0) {
+        ctrl.loadLevel(gameState.levelIndex - 1);
+      }
+    });
+
+    nextButton.addEventListener("click", () => {
+      if (gameState.levelIndex < ctrl.gameLevels.length - 1) {
+        ctrl.loadLevel(gameState.levelIndex + 1);
+      }
+    });
+
+    retryButton.addEventListener("click", () => {
+      ctrl.loadLevel(gameState.levelIndex);
+    });
+
+    winNextButton.addEventListener("click", () => {
+      if (gameState.isLevelWon && gameState.levelIndex < ctrl.gameLevels.length - 1) {
+        ctrl.loadLevel(gameState.levelIndex + 1);
+      }
+    });
+
+    initDone = true;
+  }
 
   loadLevel(0);
 }
 
-init();
+if (!window.WORM_CUSTOM_PAGE) {
+  init();
+}

@@ -11,7 +11,7 @@
     <header class="header">
       <h1>Worm Level Editor</h1>
       <p>Edit level graphs: drag nodes, change types, and modify edges.</p>
-      <p><a href="index.html">Back to Game</a></p>
+      <p><a href="index.html">Back to Game</a> · <a href="custom.html">Play Custom Levels</a></p>
     </header>
 
     <section class="layout">
@@ -63,7 +63,10 @@
 
         <div class="section">
           <h2>Export</h2>
-          <button id="export-level" type="button">Generate JS</button>
+          <div class="row">
+            <button id="export-level" type="button">Generate JS</button>
+            <button id="download-json" type="button">Download JSON</button>
+          </div>
           <textarea id="export-output" rows="8" readonly></textarea>
         </div>
       </aside>

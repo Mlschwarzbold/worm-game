@@ -419,6 +419,20 @@ function exportCurrentLevel() {
   output.value = payload;
 }
 
+function downloadJson() {
+  const level = state.level;
+  const json = JSON.stringify(level, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${level.id}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function initEditor() {
   if (editorLevels.length === 0) {
     throw new Error("No levels loaded. Include level files before editor.js.");
@@ -437,6 +451,7 @@ function initEditor() {
   const edgeList = document.getElementById("edge-list");
   const deleteEdgeButton = document.getElementById("delete-edge");
   const exportButton = document.getElementById("export-level");
+  const downloadButton = document.getElementById("download-json");
 
   if (!(svg instanceof SVGSVGElement)) {
     throw new Error("Missing editor graph.");
@@ -453,7 +468,7 @@ function initEditor() {
   if (!(edgeFromSelect instanceof HTMLSelectElement) || !(edgeToSelect instanceof HTMLSelectElement) || !(edgeList instanceof HTMLSelectElement)) {
     throw new Error("Missing edge controls.");
   }
-  if (!(addEdgeButton instanceof HTMLButtonElement) || !(deleteEdgeButton instanceof HTMLButtonElement) || !(exportButton instanceof HTMLButtonElement)) {
+  if (!(addEdgeButton instanceof HTMLButtonElement) || !(deleteEdgeButton instanceof HTMLButtonElement) || !(exportButton instanceof HTMLButtonElement) || !(downloadButton instanceof HTMLButtonElement)) {
     throw new Error("Missing edge/export action buttons.");
   }
 
@@ -564,6 +579,10 @@ function initEditor() {
 
   exportButton.addEventListener("click", () => {
     exportCurrentLevel();
+  });
+
+  downloadButton.addEventListener("click", () => {
+    downloadJson();
   });
 
   svg.addEventListener("mousemove", (event) => {
