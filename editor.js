@@ -109,6 +109,38 @@ function persistCurrentLevelDraft() {
   editorLevels[state.levelIndex] = cloneLevel(state.level);
 }
 
+const EDITOR_STORAGE_KEY = "worm-editor-state";
+
+function saveEditorState() {
+  persistCurrentLevelDraft();
+  const data = {
+    levels: editorLevels.map(cloneLevel),
+    levelIndex: state.levelIndex
+  };
+  sessionStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(data));
+}
+
+function restoreEditorState() {
+  const raw = sessionStorage.getItem(EDITOR_STORAGE_KEY);
+  if (!raw) return false;
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return false;
+  }
+  if (!Array.isArray(data.levels) || data.levels.length === 0) return false;
+  editorLevels.length = 0;
+  for (const level of data.levels) {
+    editorLevels.push(level);
+  }
+  if (typeof data.levelIndex === "number" && data.levelIndex >= 0 && data.levelIndex < editorLevels.length) {
+    state.levelIndex = data.levelIndex;
+  }
+  sessionStorage.removeItem(EDITOR_STORAGE_KEY);
+  return true;
+}
+
 function svgPoint(svg, event) {
   const point = svg.createSVGPoint();
   point.x = event.clientX;
@@ -434,6 +466,7 @@ function downloadJson() {
 }
 
 function playtestLevel() {
+  saveEditorState();
   persistCurrentLevelDraft();
   const level = cloneLevel(state.level);
   sessionStorage.setItem("worm-playtest-level", JSON.stringify(level));
@@ -781,7 +814,8 @@ function initEditor() {
     }
   });
 
-  loadLevel(0);
+  const restored = restoreEditorState();
+  loadLevel(restored ? state.levelIndex : 0);
 }
 
 initEditor();

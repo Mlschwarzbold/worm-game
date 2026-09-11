@@ -62,19 +62,6 @@
         </div>
 
         <div class="section">
-          <h2>Import</h2>
-          <textarea id="import-input" rows="4" placeholder='Paste level JSON here...'></textarea>
-          <div class="row">
-            <button id="import-button" type="button">Import</button>
-            <label class="file-label">
-              Upload .json
-              <input type="file" id="import-file" accept=".json,application/json">
-            </label>
-          </div>
-          <p id="import-error" class="import-error"></p>
-        </div>
-
-        <div class="section">
           <h2>Export</h2>
           <div class="row">
             <button id="export-level" type="button">Generate JS</button>
@@ -82,14 +69,27 @@
           </div>
           <textarea id="export-output" rows="8" readonly></textarea>
         </div>
-
-        <div class="section">
-          <button id="playtest-level" type="button">Playtest Level</button>
-        </div>
       </aside>
 
-      <section class="board-wrap">
-        <svg id="editor-graph" class="board" viewBox="0 0 800 600" role="img" aria-label="Level editor graph"></svg>
+      <section class="board-area">
+        <div class="board-toolbar">
+          <div class="import-group">
+            <textarea id="import-input" rows="2" placeholder='Paste level JSON...'></textarea>
+            <div class="row">
+              <button id="import-button" type="button">Import</button>
+              <label class="file-label">
+                Upload .json
+                <input type="file" id="import-file" accept=".json,application/json">
+              </label>
+            </div>
+            <p id="import-error" class="import-error"></p>
+          </div>
+          <button id="playtest-level" type="button">Playtest Level</button>
+        </div>
+
+        <section class="board-wrap">
+          <svg id="editor-graph" class="board" viewBox="0 0 800 600" role="img" aria-label="Level editor graph"></svg>
+        </section>
       </section>
     </section>
   </main>
