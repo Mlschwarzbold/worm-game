@@ -6,7 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const gameArea = document.getElementById("game-area");
 
   backButton.addEventListener("click", () => {
-    window.location.href = "editor.html";
+    sessionStorage.removeItem(PLAYTEST_STORAGE_KEY);
+    window.close();
   });
 
   const raw = sessionStorage.getItem(PLAYTEST_STORAGE_KEY);
